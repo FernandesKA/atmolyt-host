@@ -12,6 +12,8 @@
 #include "peripheral_factory.h"
 #ifdef TARGET_HOST
 #include "peripheral/mock_environmental.h"
+#else
+#include "peripheral/bme280.h"
 #endif
 #include <stdexcept>
 #include <algorithm>
@@ -20,6 +22,7 @@ namespace peripherals {
 
 const std::map<std::string, PeripheralType> peripheral_factory::type_map_ = {
     {"bmp280", PeripheralType::BMP280},
+    {"bme280", PeripheralType::BME280},
     {"mpu6050", PeripheralType::MPU6050},
     {"dht22", PeripheralType::DHT22},
     {"sgp41", PeripheralType::SGP41}
@@ -27,6 +30,7 @@ const std::map<std::string, PeripheralType> peripheral_factory::type_map_ = {
 
 const std::map<PeripheralType, std::string> peripheral_factory::reverse_type_map_ = {
     {PeripheralType::BMP280, "bmp280"},
+    {PeripheralType::BME280, "bme280"},
     {PeripheralType::MPU6050, "mpu6050"},
     {PeripheralType::DHT22, "dht22"},
     {PeripheralType::SGP41, "sgp41"}
@@ -34,6 +38,7 @@ const std::map<PeripheralType, std::string> peripheral_factory::reverse_type_map
 
 const std::map<PeripheralType, uint8_t> peripheral_factory::default_addresses_ = {
     {PeripheralType::BMP280, 0x76},
+    {PeripheralType::BME280, 0x76},
     {PeripheralType::MPU6050, 0x68},
     {PeripheralType::DHT22, 0x00},
     {PeripheralType::SGP41, 0x59}
@@ -48,8 +53,12 @@ peripheral_factory::create_environmental_sensor(
     return std::make_unique<mock_environmental>(conn, address);
     #else
     switch (type) {
+        case PeripheralType::BME280:
+            return std::make_unique<bme280>(conn, address);
+
         case PeripheralType::BMP280:
-            return std::make_unique<bmp280>(conn, address);
+            // BMP280 is not implemented here yet; fallback to BME280-compatible driver if available
+            return std::make_unique<bme280>(conn, address);
 
         case PeripheralType::DHT22:
             return std::make_unique<dht22>(conn, address);

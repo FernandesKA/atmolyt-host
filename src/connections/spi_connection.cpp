@@ -1,7 +1,7 @@
 /**
  * @file spi_connection.cpp
  * @author FernandesKA (fernandes.kir@yandex.ru)
- * @brief 
+ * @brief  SPI connection implementation
  * @version 0.1
  * @date 2025-12-06
  * 
@@ -9,7 +9,7 @@
  * 
  */
 
-#include "spi_connection.h"
+#include "connections/spi_connection.h"
 #include <linux/spi/spidev.h>
 #include <fcntl.h>
 #include <unistd.h>

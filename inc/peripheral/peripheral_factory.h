@@ -1,7 +1,7 @@
 /**
- * @file periphery_factory.h
+ * @file peripheral_factory.h
  * @author FernandesKA (fernandes.kir@yandex.ru)
- * @brief
+ * @brief  Factory for creating peripheral sensor instances
  * @version 0.1
  * @date 2025-12-06
  *
@@ -12,7 +12,7 @@
 #pragma once
 
 #include "peripheral_iface.h"
-#include "connecttions/connection_iface.h"
+#include "connections/connection_iface.h"
 #include <memory>
 #include <string>
 #include <map>
@@ -24,6 +24,7 @@ namespace peripherals
     {
         Unknown,
         BMP280,
+        BME280,
         MPU6050,
         DHT22,
         SGP41

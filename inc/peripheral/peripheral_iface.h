@@ -1,7 +1,7 @@
 /**
- * @file periphery_iface.h
+ * @file peripheral_iface.h
  * @author FernandesKA (fernandes.kir@yandex.ru)
- * @brief
+ * @brief  Base interface for peripheral sensors
  * @version 0.1
  * @date 2025-12-06
  *
@@ -10,7 +10,7 @@
  */
 #pragma once
 
-#include "connecttions/connection_iface.h"
+#include "connections/connection_iface.h"
 #include <cstdint>
 #include <string_view>
 #include <optional>

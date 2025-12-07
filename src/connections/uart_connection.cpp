@@ -1,4 +1,15 @@
-#include "uart_connection.h"
+/**
+ * @file uart_connection.cpp
+ * @author FernandesKA (fernandes.kir@yandex.ru)
+ * @brief  UART connection implementation
+ * @version 0.1
+ * @date 2025-12-07
+ * 
+ * @copyright Copyright (c) 2025
+ * 
+ */
+
+#include "connections/uart_connection.h"
 #include <fcntl.h>
 #include <unistd.h>
 #include <sys/ioctl.h>

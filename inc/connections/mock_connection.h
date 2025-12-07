@@ -1,6 +1,17 @@
+/**
+ * @file mock_connection.h
+ * @author FernandesKA (fernandes.kir@yandex.ru)
+ * @brief  Mock connection implementation for testing
+ * @version 0.1
+ * @date 2025-12-07
+ * 
+ * @copyright Copyright (c) 2025
+ * 
+ */
+
 #pragma once
 
-#include "connecttions/connection_iface.h"
+#include "connections/connection_iface.h"
 #include <vector>
 
 namespace connections

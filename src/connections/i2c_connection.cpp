@@ -1,7 +1,7 @@
 /**
  * @file i2c_connection.cpp
  * @author FernandesKA (fernandes.kir@yandex.ru)
- * @brief 
+ * @brief  I2C connection implementation
  * @version 0.1
  * @date 2025-12-06
  * 
@@ -9,7 +9,7 @@
  * 
  */
 
-#include "i2c_connection.h"
+#include "connections/i2c_connection.h"
 #include <linux/i2c-dev.h>
 #include <fcntl.h>
 #include <unistd.h>

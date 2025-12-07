@@ -56,5 +56,52 @@ target_link_libraries(atmolyt-host PRIVATE
     Boost::program_options
 )
 
+# Enable CTest
+enable_testing()
+
+# Add test executable
+file(GLOB_RECURSE TEST_SOURCES
+    ${REPO_ROOT}/tests/*.cpp
+)
+
+if(TEST_SOURCES)
+    # Collect sources for tests (exclude main.cpp)
+    set(TEST_LINK_SOURCES
+        ${REPO_ROOT}/src/peripheral/bme280.cpp
+        ${REPO_ROOT}/src/peripheral/peripheral_factory.cpp
+        ${REPO_ROOT}/src/connections/mock_connection.cpp
+        ${REPO_ROOT}/src/config/config_loader.cpp
+    )
+    
+    add_executable(test_atmolyt ${TEST_SOURCES} ${TEST_LINK_SOURCES})
+    target_include_directories(test_atmolyt PRIVATE
+        ${REPO_ROOT}/inc
+        ${REPO_ROOT}/inc/connections
+        ${REPO_ROOT}/inc/peripheral
+        ${REPO_ROOT}/inc/app
+        ${REPO_ROOT}/inc/config
+        ${CMAKE_SOURCE_DIR}/inc
+        ${REPO_ROOT}/tests
+    )
+    target_link_libraries(test_atmolyt PRIVATE
+        Boost::filesystem
+        Boost::system
+        Boost::program_options
+    )
+    
+    # Compile with host target features for test
+    add_compile_definitions(TARGET_HOST)
+    
+    add_test(NAME atmolyt_tests COMMAND test_atmolyt)
+endif()
+
 install(TARGETS atmolyt-host RUNTIME DESTINATION bin)
-install(FILES ${CMAKE_SOURCE_DIR}/config/atmolyt.json DESTINATION /etc/atmolyt/ OPTIONAL)
+install(DIRECTORY ${CMAKE_SOURCE_DIR}/config/ DESTINATION /etc/atmolyt)
+
+# Packaging with CPack - create a tarball which includes the binary and configs
+include(InstallRequiredSystemLibraries)
+set(CPACK_PACKAGE_NAME "atmolyt-host")
+set(CPACK_PACKAGE_VERSION "${PROJECT_VERSION}")
+set(CPACK_GENERATOR "TGZ")
+set(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_NAME}-${CPACK_PACKAGE_VERSION}")
+include(CPack)

@@ -1,3 +1,14 @@
+/**
+ * @file mock_environmental.h
+ * @author FernandesKA (fernandes.kir@yandex.ru)
+ * @brief  Mock environmental sensor implementation for testing
+ * @version 0.1
+ * @date 2025-12-07
+ * 
+ * @copyright Copyright (c) 2025
+ * 
+ */
+
 #pragma once
 
 #include "peripheral/peripheral_iface.h"

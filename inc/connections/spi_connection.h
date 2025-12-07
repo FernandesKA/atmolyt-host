@@ -1,7 +1,7 @@
 /**
  * @file spi_connection.h
  * @author FernandesKA (fernandes.kir@yandex.ru)
- * @brief 
+ * @brief  SPI connection implementation
  * @version 0.1
  * @date 2025-12-06
  * 

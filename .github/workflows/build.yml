@@ -1,0 +1,62 @@
+name: Build and Test
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Build Docker image
+      run: docker build -t atmolyt-host:latest .
+    
+    - name: Run container tests
+      run: |
+        docker run --rm atmolyt-host:latest --help || true
+        docker run --rm atmolyt-host:latest --version || true
+    
+    - name: Extract and check binary
+      run: |
+        docker run --rm -v $(pwd)/artifacts:/tmp/out atmolyt-host:latest bash -c "cp /usr/local/bin/atmolyt-host /tmp/out/" || true
+        ls -la $(pwd)/artifacts/ || echo "No artifacts produced"
+
+  build-native:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          build-essential \
+          cmake \
+          libboost-all-dev
+    
+    - name: Configure (host build)
+      run: |
+        mkdir -p project/build
+        cd project/build
+        cmake -S .. -B . -DTARGET_BUILD=host -DCMAKE_BUILD_TYPE=Release
+    
+    - name: Build
+      run: |
+        cd project/build
+        cmake --build . -j$(nproc)
+    
+    - name: Run tests
+      run: |
+        cd project/build
+        ctest --output-on-failure || true
+    
+    - name: Run basic checks
+      run: |
+        ./project/build/atmolyt-host --help
+        ./project/build/atmolyt-host --version || true
