@@ -16,6 +16,12 @@ int main(int argc, char **argv)
 
     app::atmolyt application(argc, argv);
 
+    // Exit early if --help, --view, --st was used (should_run() returns false)
+    if (!application.should_run())
+    {
+        return 0;
+    }
+
     while (!signal_handler::shutdown_requested())
     {
         signal_handler::poll_and_handle();

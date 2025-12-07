@@ -47,4 +47,7 @@ RUN apt-get update && apt-get install -y \
 
 COPY --from=0 /staging /usr/local
 
+# Symlink config to /etc for backward compatibility
+RUN ln -s /usr/local/etc/atmolyt /etc/atmolyt
+
 ENTRYPOINT ["/usr/local/bin/atmolyt-host"]

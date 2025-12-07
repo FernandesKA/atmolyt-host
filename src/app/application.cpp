@@ -26,14 +26,29 @@ using namespace peripherals;
 namespace app
 {
     atmolyt::atmolyt(int argc, char *argv[])
+        : should_run_(true)
     {
         int rc = parse_inarg(argc, argv);
-        is_periphery_init = (rc == 0);
-
-        if (is_periphery_init)
+        
+        // rc = 1 means --help/--view/--st was shown, don't run main loop
+        // rc = 0 means normal operation, initialize peripherals
+        // rc < 0 means error
+        if (rc == 1)
         {
+            should_run_ = false;
+            is_periphery_init = false;
+        }
+        else if (rc == 0)
+        {
+            is_periphery_init = true;
+            should_run_ = true;
             if (!load_and_create_peripherals())
                 std::cerr << "Warning: failed to create peripherals from config" << std::endl;
+        }
+        else
+        {
+            should_run_ = false;
+            is_periphery_init = false;
         }
     }
 
@@ -88,12 +103,14 @@ namespace app
         {
             // TODO: implement viewing config file parameters
             std::cout << "View config requested\n";
+            return 1;
         }
 
         if (vm["st"].as<bool>())
         {
             // TODO: implement self-test sequence
             std::cout << "Self-test requested\n";
+            return 1;
         }
 
         return 0;

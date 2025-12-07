@@ -27,6 +27,9 @@ namespace app
         atmolyt(int argc, char *argv[]);
         ~atmolyt();
 
+        // Check if app should run main loop (false if --help, --view, --st was used)
+        bool should_run() const { return should_run_; }
+
     private:
 
         int parse_inarg(int, char**);
@@ -36,6 +39,7 @@ namespace app
 
     private:
         bool is_periphery_init = false;
+        bool should_run_ = true;
 
         // storage for live connections and peripheral objects
         std::vector<std::unique_ptr<connections::connection_iface<uint8_t>>> connections_;
