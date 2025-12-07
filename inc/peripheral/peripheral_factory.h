@@ -12,7 +12,7 @@
 #pragma once
 
 #include "peripheral_iface.h"
-#include "connection_iface.h"
+#include "connecttions/connection_iface.h"
 #include <memory>
 #include <string>
 #include <map>

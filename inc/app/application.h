@@ -11,6 +11,8 @@
 
 #pragma once
 
+#include <boost/program_options.hpp>
+
 namespace app
 {
     class atmolyt
@@ -20,7 +22,13 @@ namespace app
         ~atmolyt();
 
     private:
+
+        int parse_inarg(int, char**);
+
+    private:
         bool is_periphery_init = false;
+
+
     };
 
 };

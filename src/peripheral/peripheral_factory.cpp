@@ -10,10 +10,9 @@
  */
 
 #include "peripheral_factory.h"
-// #include "bmp280.h"
-// #include "mpu6050.h"
-// #include "dht22.h"
-// #include "sgp41.h"
+#ifdef TARGET_HOST
+#include "peripheral/mock_environmental.h"
+#endif
 #include <stdexcept>
 #include <algorithm>
 
@@ -45,17 +44,20 @@ peripheral_factory::create_environmental_sensor(
     PeripheralType type,
     connections::addressable_connection_iface<uint8_t>* conn,
     uint8_t address) {
-    
+    #ifdef TARGET_HOST
+    return std::make_unique<mock_environmental>(conn, address);
+    #else
     switch (type) {
         case PeripheralType::BMP280:
             return std::make_unique<bmp280>(conn, address);
-        
+
         case PeripheralType::DHT22:
             return std::make_unique<dht22>(conn, address);
-        
+
         default:
             throw std::runtime_error("Unsupported environmental sensor type");
     }
+    #endif
 }
 
 std::unique_ptr<imu_iface>
@@ -63,14 +65,17 @@ peripheral_factory::create_imu(
     PeripheralType type,
     connections::addressable_connection_iface<uint8_t>* conn,
     uint8_t address) {
-    
+    #ifdef TARGET_HOST
+    return nullptr;
+    #else
     switch (type) {
         case PeripheralType::MPU6050:
             return std::make_unique<mpu6050>(conn, address);
-        
+
         default:
             throw std::runtime_error("Unsupported IMU type");
     }
+    #endif
 }
 
 std::unique_ptr<gas_sensor_iface>
@@ -78,14 +83,17 @@ peripheral_factory::create_gas_sensor(
     PeripheralType type,
     connections::addressable_connection_iface<uint8_t>* conn,
     uint8_t address) {
-    
+    #ifdef TARGET_HOST
+    return nullptr;
+    #else
     switch (type) {
         case PeripheralType::SGP41:
             return std::make_unique<sgp41>(conn, address);
-        
+
         default:
             throw std::runtime_error("Unsupported gas sensor type");
     }
+    #endif
 }
 
 PeripheralType peripheral_factory::string_to_type(const std::string& type_str) {
