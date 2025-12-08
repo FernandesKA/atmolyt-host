@@ -16,6 +16,7 @@
 #include "connections/mock_connection.h"
 #include "peripheral/bme280.h"
 #include "peripheral/peripheral_factory.h"
+#include "self_test/self_test.h"
 
 #include <iostream>
 #include <cerrno>
@@ -78,7 +79,9 @@ namespace app
         desc.add_options()
             ("help,h", po::bool_switch()->default_value(false), "produce help message")
             ("view,v", po::bool_switch()->default_value(false), "view params from config file")
-            ("st,s", po::bool_switch()->default_value(false), "begin self testing hardware");
+            ("st,s", po::bool_switch()->default_value(false), "begin self testing hardware")
+            ("st-config", po::value<std::string>()->default_value("./config/atmolyt.json"), "path to config for self-test")
+            ("st-json", po::bool_switch()->default_value(false), "output self-test results as JSON");
 
         po::variables_map vm;
         try
@@ -108,8 +111,16 @@ namespace app
 
         if (vm["st"].as<bool>())
         {
-            // TODO: implement self-test sequence
             std::cout << "Self-test requested\n";
+            std::string cfg = vm["st-config"].as<std::string>();
+            bool json_out = vm["st-json"].as<bool>();
+            // run self-test sequence (will load config and exercise peripherals)
+            st::self_test tester(cfg, json_out);
+            int rc = tester.run();
+            if (rc != 0)
+            {
+                std::cerr << "Self-test returned: " << rc << "\n";
+            }
             return 1;
         }
 

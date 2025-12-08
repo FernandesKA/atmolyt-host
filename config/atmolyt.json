@@ -1,0 +1,10 @@
+{
+  "peripherals": [
+    {
+      "connection": "mock",
+      "type": "bme280",
+      "device": "",
+      "address": 118
+    }
+  ]
+}

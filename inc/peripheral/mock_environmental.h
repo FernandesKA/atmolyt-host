@@ -27,7 +27,13 @@ namespace peripherals
         bool is_connected() override { return initialized_; }
         Status reset() override { initialized_ = true; return Status::Success; }
 
-        Status read_data(combined_env_data &data) override { (void)data; return Status::Success; }
+        
+        Status read_data(combined_env_data &data) override { 
+            data.temperature.celsius = 25.0f; data.temperature.valid = true;
+            data.humidity.relative_humidity = 50.0f; data.humidity.valid = true;
+            data.pressure.pascals = 101325.0f; data.pressure.valid = true;
+            return Status::Success; 
+        }
 
         Status read_temperature(temperature_data &data) override {
             data.celsius = 25.0f; data.valid = true; return Status::Success;
