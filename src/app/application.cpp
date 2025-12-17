@@ -79,6 +79,7 @@ namespace app
         desc.add_options()
             ("help,h", po::bool_switch()->default_value(false), "produce help message")
             ("view,v", po::bool_switch()->default_value(false), "view params from config file")
+            ("config,c", po::value<std::string>()->default_value("./config/atmolyt.json"), "path to config file")
             ("st,s", po::bool_switch()->default_value(false), "begin self testing hardware")
             ("st-config", po::value<std::string>()->default_value("./config/atmolyt.json"), "path to config for self-test")
             ("st-json", po::bool_switch()->default_value(false), "output self-test results as JSON");
@@ -95,6 +96,8 @@ namespace app
             std::cerr << desc << std::endl;
             return -EINVAL;
         }
+
+        config_path_ = vm["config"].as<std::string>();
 
         if (vm["help"].as<bool>())
         {
@@ -130,10 +133,11 @@ namespace app
     bool atmolyt::load_and_create_peripherals()
     {
         config::AppConfig cfg;
-        // try local config first, then /etc
-        if (!config::load_config("./config/atmolyt.json", cfg))
+        // try the specified config path
+        if (!config::load_config(config_path_, cfg))
         {
-            config::load_config("/etc/atmolyt/atmolyt.json", cfg);
+            std::cerr << "Failed to load config from " << config_path_ << std::endl;
+            return false;
         }
 
         for (auto &p : cfg.peripherals)

@@ -96,7 +96,8 @@ if(TEST_SOURCES)
 endif()
 
 install(TARGETS atmolyt-host RUNTIME DESTINATION bin)
-install(DIRECTORY ${CMAKE_SOURCE_DIR}/config/ DESTINATION etc/atmolyt)
+install(PROGRAMS ${REPO_ROOT}/scripts/start.sh ${REPO_ROOT}/scripts/debug.sh DESTINATION scripts)
+install(DIRECTORY ${CMAKE_SOURCE_DIR}/config/ DESTINATION config)
 
 # Packaging with CPack - create a tarball which includes the binary and configs
 include(InstallRequiredSystemLibraries)

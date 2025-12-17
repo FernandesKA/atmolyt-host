@@ -40,6 +40,7 @@ namespace app
     private:
         bool is_periphery_init = false;
         bool should_run_ = true;
+        std::string config_path_ = "./config/atmolyt.json";
 
         // storage for live connections and peripheral objects
         std::vector<std::unique_ptr<connections::connection_iface<uint8_t>>> connections_;
