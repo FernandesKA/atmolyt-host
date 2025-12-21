@@ -1,10 +1,27 @@
 {
   "peripherals": [
     {
-      "connection": "mock",
+      "connection": "i2c",
       "type": "bme280",
-      "device": "",
+      "device": "/dev/i2c-1",
       "address": 118
+    },
+    {
+      "connection": "i2c",
+      "type": "scd41",
+      "device": "/dev/i2c-1",
+      "address": 98
+    },
+    {
+      "connection": "fb",
+      "type": "ssd1306",
+      "device": "/dev/fb0"
+    },
+    {
+      "connection": "i2c",
+      "type": "ds3231",
+      "device": "/dev/i2c-1",
+      "address": 104
     }
   ]
 }

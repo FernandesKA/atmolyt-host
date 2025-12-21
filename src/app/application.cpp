@@ -16,6 +16,7 @@
 #include "connections/mock_connection.h"
 #include "peripheral/bme280.h"
 #include "peripheral/peripheral_factory.h"
+#include "peripheral/peripheral_iface.h"
 #include "self_test/self_test.h"
 
 #include <iostream>
@@ -60,6 +61,21 @@ namespace app
         {
             if (sensor)
                 sensor->deinitialize();
+        }
+        for (auto &sensor : gas_sensors_)
+        {
+            if (sensor)
+                sensor->deinitialize();
+        }
+        for (auto &display : displays_)
+        {
+            if (display)
+                display->deinitialize();
+        }
+        for (auto &rtc : rtcs_)
+        {
+            if (rtc)
+                rtc->deinitialize();
         }
         for (auto &conn : connections_)
         {
@@ -146,45 +162,132 @@ namespace app
             std::string type = p.type;
             uint8_t addr = p.address;
 
-#ifdef TARGET_HOST
+#if TARGET_HOST
             // use mock connection for host
             auto mock = std::make_unique<connections::mock_addressable_connection>("mock");
             mock->initialize();
             connections_.push_back(std::move(mock));
             auto *conn_ptr = connections_.back().get();
             try {
-                auto sensor = peripheral_factory::create_environmental_sensor(peripheral_factory::string_to_type(type), static_cast<connections::addressable_connection_iface<uint8_t>*>(conn_ptr), addr);
-                if (sensor)
-                {
-                    sensor->initialize();
-                    environmental_sensors_.push_back(std::move(sensor));
+                peripherals::PeripheralType ptype = peripheral_factory::string_to_type(type);
+                if (ptype == peripherals::PeripheralType::BME280 ||
+                    ptype == peripherals::PeripheralType::BMP280 ||
+                    ptype == peripherals::PeripheralType::DHT22) {
+                    auto sensor = peripheral_factory::create_environmental_sensor(ptype, static_cast<connections::addressable_connection_iface<uint8_t>*>(conn_ptr), addr);
+                    if (sensor)
+                    {
+                        sensor->initialize();
+                        environmental_sensors_.push_back(std::move(sensor));
+                    }
+                } else if (ptype == peripherals::PeripheralType::SCD41 ||
+                           ptype == peripherals::PeripheralType::SGP41) {
+                    auto sensor = peripheral_factory::create_gas_sensor(ptype, static_cast<connections::addressable_connection_iface<uint8_t>*>(conn_ptr), addr);
+                    if (sensor)
+                    {
+                        sensor->initialize();
+                        gas_sensors_.push_back(std::move(sensor));
+                    }
+                } else if (ptype == peripherals::PeripheralType::SSD1306) {
+                    std::cout << "SSD1306 conn: " << conn << std::endl;
+                    connections::addressable_connection_iface<uint8_t>* display_conn = nullptr;
+                    if (conn != "fb") {
+                        // I2C mode
+                        auto i2c = std::make_unique<connections::i2c_connection>(p.device.empty() ? "/dev/i2c-2" : p.device);
+                        if (i2c->initialize() != connections::Status::Success) {
+                            std::cerr << "Failed to init i2c for display: " << p.device << std::endl;
+                            continue;
+                        }
+                        connections_.push_back(std::move(i2c));
+                        display_conn = connections_.back().get();
+                    }
+                    // For fb, display_conn remains nullptr
+                    auto display = peripheral_factory::create_display(ptype, display_conn, addr);
+                    if (display)
+                    {
+                        display->initialize();
+                        displays_.push_back(std::move(display));
+                    }
+                } else if (ptype == peripherals::PeripheralType::DS3231) {
+                    auto rtc = peripheral_factory::create_rtc(ptype, static_cast<connections::addressable_connection_iface<uint8_t>*>(conn_ptr), addr);
+                    if (rtc)
+                    {
+                        rtc->initialize();
+                        rtcs_.push_back(std::move(rtc));
+                    }
+                } else {
+                    std::cerr << "Unsupported sensor type: " << type << std::endl;
                 }
             } catch(...) {
                 std::cerr << "Failed to create sensor: " << type << std::endl;
             }
 #else
+            connections::addressable_connection_iface<uint8_t>* conn_ptr = nullptr;
             if (conn == "i2c")
             {
-                auto i2c = std::make_unique<connections::i2c_connection>(p.device.empty() ? "/dev/i2c-2" : p.device);
+                auto i2c = std::make_unique<connections::i2c_connection>(p.device.empty() ? "/dev/i2c-1" : p.device);
                 if (i2c->initialize() != connections::Status::Success)
                 {
                     std::cerr << "Failed to init i2c: " << p.device << std::endl;
                     continue;
                 }
                 connections_.push_back(std::move(i2c));
-                auto *conn_ptr = connections_.back().get();
-                try {
-                    auto sensor = peripheral_factory::create_environmental_sensor(peripheral_factory::string_to_type(type), static_cast<connections::addressable_connection_iface<uint8_t>*>(conn_ptr), addr);
+                conn_ptr = static_cast<connections::addressable_connection_iface<uint8_t>*>(connections_.back().get());
+            }
+            else if (conn == "fb")
+            {
+                // framebuffer, no connection
+                conn_ptr = nullptr;
+            }
+            else
+            {
+                std::cerr << "Unsupported connection type: " << conn << std::endl;
+                continue;
+            }
+            try {
+                peripherals::PeripheralType ptype = peripheral_factory::string_to_type(type);
+                if (ptype == peripherals::PeripheralType::BME280 ||
+                    ptype == peripherals::PeripheralType::BMP280 ||
+                    ptype == peripherals::PeripheralType::DHT22) {
+                    auto sensor = peripheral_factory::create_environmental_sensor(ptype, conn_ptr, addr);
                     if (sensor)
                     {
                         sensor->initialize();
                         environmental_sensors_.push_back(std::move(sensor));
                     }
-                } catch(...) {
-                    std::cerr << "Failed to create sensor: " << type << std::endl;
+                } else if (ptype == peripherals::PeripheralType::SCD41 ||
+                           ptype == peripherals::PeripheralType::SGP41) {
+                    auto sensor = peripheral_factory::create_gas_sensor(ptype, conn_ptr, addr);
+                    if (sensor)
+                    {
+                        sensor->initialize();
+                        gas_sensors_.push_back(std::move(sensor));
+                    }
+                } else if (ptype == peripherals::PeripheralType::SSD1306) {
+                    auto display = peripheral_factory::create_display(ptype, conn_ptr, addr);
+                    if (display)
+                    {
+                        display->initialize();
+                        displays_.push_back(std::move(display));
+                    }
+                } else if (ptype == peripherals::PeripheralType::DS3231) {
+                    auto rtc = peripheral_factory::create_rtc(ptype, conn_ptr, addr);
+                    if (rtc)
+                    {
+                        rtc->initialize();
+                        rtcs_.push_back(std::move(rtc));
+                    }
+                } else {
+                    std::cerr << "Unsupported sensor type: " << type << std::endl;
                 }
+            } catch(...) {
+                std::cerr << "Failed to create sensor: " << type << std::endl;
             }
 #endif
+        }
+
+        // Display initialization success message
+        for (auto& display : displays_) {
+            display->display_text("Initialization successful", 0, 0);
         }
 
         return true;

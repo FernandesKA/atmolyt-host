@@ -40,6 +40,12 @@ namespace connections
         }
         Status write(uint8_t device_addr, std::span<const uint8_t> data) override { (void)device_addr; (void)data; return Status::Success; }
 
+        Status write_read(uint8_t device_addr, std::span<const uint8_t> write_data, std::span<uint8_t> read_buffer) override {
+            (void)device_addr; (void)write_data;
+            for (size_t i = 0; i < read_buffer.size(); ++i) read_buffer[i] = static_cast<uint8_t>(i & 0xFF);
+            return Status::Success;
+        }
+
         Status read_register(uint8_t device_addr, uint8_t reg_addr, std::span<uint8_t> buffer) override {
             (void)device_addr;
             // Return realistic ID for BME280/BMP280 when ID register requested

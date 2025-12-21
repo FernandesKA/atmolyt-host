@@ -135,7 +135,16 @@ namespace peripherals
         float tvoc_ppb;
         bool valid;
     };
-
+    struct time_data
+    {
+        int year;
+        int month;
+        int day;
+        int hour;
+        int minute;
+        int second;
+        bool valid;
+    };
     class temperature_sensor_iface : public peripheral_iface<temperature_data>
     {
     public:
@@ -208,6 +217,29 @@ namespace peripherals
         virtual Status set_measurement_mode(uint8_t mode) = 0;
         virtual Status read_co2(float &ppm) = 0;
         virtual Status read_tvoc(float &ppb) = 0;
+    };
+
+    struct display_data
+    {
+        // Dummy struct for display
+    };
+
+    class display_iface : public peripheral_iface<display_data>
+    {
+    public:
+        using peripheral_iface::peripheral_iface;
+
+        virtual Status clear() = 0;
+        virtual Status display_text(const std::string &text, uint8_t x = 0, uint8_t y = 0) = 0;
+        virtual Status set_cursor(uint8_t x, uint8_t y) = 0;
+    };
+
+    class rtc_iface : public peripheral_iface<time_data>
+    {
+    public:
+        using peripheral_iface::peripheral_iface;
+
+        virtual Status set_time(const time_data &time) = 0;
     };
 
 } // namespace peripherals

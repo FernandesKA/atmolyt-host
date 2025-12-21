@@ -87,6 +87,8 @@ public:
     virtual Status read(uint8_t device_addr, std::span<T> buffer) = 0;
     virtual Status write(uint8_t device_addr, std::span<const T> data) = 0;
     
+    virtual Status write_read(uint8_t device_addr, std::span<const T> write_data, std::span<T> read_buffer) = 0;
+    
     virtual Status read_register(uint8_t device_addr, uint8_t reg_addr, 
                                  std::span<T> buffer) = 0;
     

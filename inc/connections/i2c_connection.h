@@ -36,6 +36,8 @@ public:
     Status write_register(uint8_t device_addr, uint8_t reg_addr,
                          std::span<const uint8_t> data) override;
     
+    Status write_read(uint8_t device_addr, std::span<const uint8_t> write_data, std::span<uint8_t> read_buffer) override;
+    
     Status reset() override;
     void flush() override;
 

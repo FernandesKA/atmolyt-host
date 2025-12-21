@@ -27,7 +27,10 @@ namespace peripherals
         BME280,
         MPU6050,
         DHT22,
-        SGP41
+        SGP41,
+        SCD41,
+        SSD1306,
+        DS3231
     };
 
     class peripheral_factory
@@ -49,6 +52,18 @@ namespace peripherals
 
         static std::unique_ptr<gas_sensor_iface>
         create_gas_sensor(
+            PeripheralType type,
+            connections::addressable_connection_iface<uint8_t> *conn,
+            uint8_t address);
+
+        static std::unique_ptr<display_iface>
+        create_display(
+            PeripheralType type,
+            connections::addressable_connection_iface<uint8_t> *conn,
+            uint8_t address);
+
+        static std::unique_ptr<rtc_iface>
+        create_rtc(
             PeripheralType type,
             connections::addressable_connection_iface<uint8_t> *conn,
             uint8_t address);

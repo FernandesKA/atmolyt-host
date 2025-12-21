@@ -30,6 +30,12 @@ namespace app
         // Check if app should run main loop (false if --help, --view, --st was used)
         bool should_run() const { return should_run_; }
 
+        // Getters for peripherals
+        const std::vector<std::unique_ptr<peripherals::environmental_sensor_iface>>& get_environmental_sensors() const { return environmental_sensors_; }
+        const std::vector<std::unique_ptr<peripherals::gas_sensor_iface>>& get_gas_sensors() const { return gas_sensors_; }
+        const std::vector<std::unique_ptr<peripherals::display_iface>>& get_displays() const { return displays_; }
+        const std::vector<std::unique_ptr<peripherals::rtc_iface>>& get_rtcs() const { return rtcs_; }
+
     private:
 
         int parse_inarg(int, char**);
@@ -45,6 +51,9 @@ namespace app
         // storage for live connections and peripheral objects
         std::vector<std::unique_ptr<connections::connection_iface<uint8_t>>> connections_;
         std::vector<std::unique_ptr<peripherals::environmental_sensor_iface>> environmental_sensors_;
+        std::vector<std::unique_ptr<peripherals::gas_sensor_iface>> gas_sensors_;
+        std::vector<std::unique_ptr<peripherals::display_iface>> displays_;
+        std::vector<std::unique_ptr<peripherals::rtc_iface>> rtcs_;
 
     };
 

@@ -54,6 +54,12 @@ public:
         return Status::Success;
     }
 
+    Status write_read(uint8_t device_addr, std::span<const uint8_t> write_data, std::span<uint8_t> read_buffer) override {
+        (void)device_addr; (void)write_data;
+        for (size_t i = 0; i < read_buffer.size(); ++i) read_buffer[i] = static_cast<uint8_t>(i & 0xFF);
+        return Status::Success;
+    }
+
     Status reset() override { return Status::Success; }
     void flush() override {}
 };
