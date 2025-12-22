@@ -2,7 +2,7 @@
   "peripherals": [
     {
       "connection": "i2c",
-      "type": "bme280",
+      "type": "bmp280",
       "device": "/dev/i2c-1",
       "address": 118
     },
@@ -13,9 +13,10 @@
       "address": 98
     },
     {
-      "connection": "fb",
+      "connection": "i2c",
       "type": "ssd1306",
-      "device": "/dev/fb0"
+      "device": "/dev/i2c-1",
+      "address": 60
     },
     {
       "connection": "i2c",

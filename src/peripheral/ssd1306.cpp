@@ -12,6 +12,7 @@
 #include "peripheral/ssd1306.h"
 #include <iostream>
 #include <cstring>
+#include <sstream>
 #include <thread>
 #include <chrono>
 #include <fcntl.h>
@@ -264,23 +265,33 @@ Status ssd1306::display_text(const std::string &text, uint8_t x, uint8_t y)
         }
         return Status::Success;
     } else {
-        set_cursor(x, y);
+        // I2C mode - render text using font and send data, centered
+        std::istringstream iss(text);
+        std::string line;
+        uint8_t current_y = y;
+        while (std::getline(iss, line)) {
+            // Calculate centered x
+            size_t len = line.length();
+            uint8_t centered_x = (128 - len * 6) / 2;
+            set_cursor(centered_x, current_y);
 
-        // Simple text rendering - for now, just send ASCII codes
-        // In a real implementation, you'd need a font table
-        for (char c : text) {
-            if (c == '\n') {
-                cursor_y_ += 8; // Move to next line
-                cursor_x_ = 0;
-                set_cursor(cursor_x_, cursor_y_);
-            } else {
-                // For simplicity, display character code
-                uint8_t data[8] = {0}; // 8 bytes for 8x8 font
-                // Placeholder: just set some pixels
-                data[0] = static_cast<uint8_t>(c);
-                send_data(data, 8);
-                cursor_x_ += 8;
+            for (char c : line) {
+                if (c >= 32 && c <= 126) {
+                    const uint8_t* char_data = font5x7[c - 32];
+                    // Send 5 bytes for the character
+                    Status status = send_data(char_data, 5);
+                    if (status != Status::Success) {
+                        return status;
+                    }
+                    // Send a space column
+                    uint8_t space = 0x00;
+                    status = send_data(&space, 1);
+                    if (status != Status::Success) {
+                        return status;
+                    }
+                }
             }
+            current_y += 8;
         }
 
         return Status::Success;
