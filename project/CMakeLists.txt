@@ -98,7 +98,7 @@ if(TEST_SOURCES)
 endif()
 
 install(TARGETS atmolyt-host RUNTIME DESTINATION bin)
-install(PROGRAMS ${REPO_ROOT}/scripts/start.sh ${REPO_ROOT}/scripts/debug.sh DESTINATION scripts)
+install(PROGRAMS ${REPO_ROOT}/scripts/start.sh ${REPO_ROOT}/scripts/debug.sh ${REPO_ROOT}/scripts/install.sh ${REPO_ROOT}/scripts/remove.sh DESTINATION scripts)
 install(DIRECTORY ${REPO_ROOT}/configs/ DESTINATION config)
 
 # Packaging with CPack - create a tarball which includes the binary and configs
