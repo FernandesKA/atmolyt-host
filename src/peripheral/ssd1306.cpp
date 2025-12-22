@@ -183,6 +183,12 @@ Status ssd1306::initialize()
             return status;
         }
 
+        // Clear display after initialization to remove garbage
+        status = clear();
+        if (status != Status::Success) {
+            return status;
+        }
+
         initialized_ = true;
         return Status::Success;
     }
@@ -231,11 +237,31 @@ Status ssd1306::clear()
         memset(fb_ptr_, 0, fb_size_);
         return Status::Success;
     } else {
-        uint8_t buffer[1025]; // 1 control byte + 1024 data bytes (128x64 / 8)
-        buffer[0] = 0x40; // Data control byte
-        std::memset(buffer + 1, 0x00, 1024);
+        // Set addressing mode to cover entire display
+        Status status = send_command(0x21); // Set column address
+        if (status != Status::Success) return status;
+        status = send_command(0x00); // Start column 0
+        if (status != Status::Success) return status;
+        status = send_command(0x7F); // End column 127
+        if (status != Status::Success) return status;
+        
+        status = send_command(0x22); // Set page address
+        if (status != Status::Success) return status;
+        status = send_command(0x00); // Start page 0
+        if (status != Status::Success) return status;
+        status = send_command(0x07); // End page 7
+        if (status != Status::Success) return status;
 
-        return send_data(buffer + 1, 1024);
+        // Clear all 1024 bytes (128x64/8)
+        uint8_t zero_data[128];
+        std::memset(zero_data, 0x00, 128);
+        
+        for (int page = 0; page < 8; ++page) {
+            status = send_data(zero_data, 128);
+            if (status != Status::Success) return status;
+        }
+        
+        return Status::Success;
     }
 }
 
