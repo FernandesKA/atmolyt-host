@@ -133,6 +133,8 @@ namespace peripherals
     {
         float co2_ppm;
         float tvoc_ppb;
+        float temperature_c;
+        float humidity_rh;
         bool valid;
     };
     struct time_data
@@ -230,8 +232,10 @@ namespace peripherals
         using peripheral_iface::peripheral_iface;
 
         virtual Status clear() = 0;
-        virtual Status display_text(const std::string &text, uint8_t x = 0, uint8_t y = 0) = 0;
+        virtual Status display_text(const std::string &text, uint8_t x = 0, uint8_t y = 0, uint8_t scale = 1, bool bold = false) = 0;
         virtual Status set_cursor(uint8_t x, uint8_t y) = 0;
+        virtual void draw_pixel(int x, int y, int color) = 0;
+        virtual void draw_line(int x0, int y0, int x1, int y1, int color) = 0;
     };
 
     class rtc_iface : public peripheral_iface<time_data>

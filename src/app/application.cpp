@@ -148,15 +148,14 @@ namespace app
 
     bool atmolyt::load_and_create_peripherals()
     {
-        config::AppConfig cfg;
         // try the specified config path
-        if (!config::load_config(config_path_, cfg))
+        if (!config::load_config(config_path_, config_))
         {
             std::cerr << "Failed to load config from " << config_path_ << std::endl;
             return false;
         }
 
-        for (auto &p : cfg.peripherals)
+        for (auto &p : config_.peripherals)
         {
             std::string conn = p.connection;
             std::string type = p.type;

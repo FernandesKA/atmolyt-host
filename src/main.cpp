@@ -1,8 +1,11 @@
 #include "app/application.h"
 #include "app/signal_handler.h"
+#include "app/csv_logger.h"
 #include <iostream>
 #include <thread>
 #include <chrono>
+#include <iomanip>
+#include <sstream>
 
 using app::signal_handler;
 
@@ -22,62 +25,86 @@ int main(int argc, char **argv)
         return 0;
     }
 
+    // Initialize CSV logger
+    app::csv_logger logger(application.get_log_path());
+
     // Clear display on startup
     if (!application.get_displays().empty()) {
         application.get_displays()[0]->clear();
     }
+
+    // Previous values to detect changes
+    std::string prev_co2_value = "";
+    std::string prev_temp_value = "";
+    std::string prev_hum_value = "";
 
     while (!signal_handler::shutdown_requested())
     {
         signal_handler::poll_and_handle();
 
         // Read sensors and display data
+        double co2_ppm = -1, temp_c = -999, press_pa = -1, humidity_rh = -1;
+        std::string timestamp;
+        
+        // Get current timestamp
+        auto now = std::chrono::system_clock::now();
+        auto time_t = std::chrono::system_clock::to_time_t(now);
+        std::stringstream ss;
+        ss << std::put_time(std::localtime(&time_t), "%Y-%m-%d %H:%M:%S");
+        timestamp = ss.str();
+        
         if (!application.get_displays().empty()) {
             auto& display = application.get_displays()[0];
-            display->clear();
 
-            std::string co2_str = "CO2: -- ppm";
-            std::string temp_str = "Temp: -- C";
-            std::string press_str = "Press: -- hPa";
-            std::string time_str = "Time: --:--:--";
-            std::string date_str = "Date: --/--/--";
+            std::string co2_value = "--";
+            std::string temp_value = "--";
+            std::string hum_value = "--";
 
-            // Read gas sensors (SCD41)
             for (auto& sensor : application.get_gas_sensors()) {
                 peripherals::gas_data data;
                 if (sensor->read_data(data) == peripherals::Status::Success) {
-                    co2_str = "CO2: " + std::to_string(static_cast<int>(data.co2_ppm)) + " ppm";
+                    co2_ppm = data.co2_ppm;
+                    temp_c = data.temperature_c;
+                    humidity_rh = data.humidity_rh;
+                    co2_value = std::to_string(static_cast<int>(co2_ppm));
+                    temp_value = std::to_string(temp_c).substr(0, 4);
+                    hum_value = std::to_string(static_cast<int>(humidity_rh));
                     break; // Take first successful
                 }
             }
 
-            // Read environmental sensors (BME280/BMP280)
             for (auto& sensor : application.get_environmental_sensors()) {
                 peripherals::combined_env_data data;
                 if (sensor->read_data(data) == peripherals::Status::Success) {
-                    temp_str = "Temp: " + std::to_string(data.temperature.celsius).substr(0, 4) + " C";
-                    press_str = "Press: " + std::to_string(static_cast<int>(data.pressure.pascals / 100.0)) + " hPa";
-                    break; // Take first successful
+                    press_pa = data.pressure.pascals;
+                    // Use BMP280 temperature only if not available from SCD41
+                    if (temp_c == -999) {
+                        temp_c = data.temperature.celsius;
+                        temp_value = std::to_string(temp_c).substr(0, 4);
+                    }
+                    break;
                 }
             }
 
-            // Read RTC (DS3231)
-            for (auto& rtc : application.get_rtcs()) {
-                peripherals::time_data time;
-                if (rtc->read_data(time) == peripherals::Status::Success) {
-                    char buf[12];
-                    std::snprintf(buf, sizeof(buf), "%02d:%02d:%02d", time.hour, time.minute, time.second);
-                    time_str = "Time: " + std::string(buf);
-                    std::snprintf(buf, sizeof(buf), "%02d/%02d/%02d", time.day, time.month, time.year % 100);
-                    date_str = "Date: " + std::string(buf);
-                    break; // Take first successful
-                }
+            if (co2_value != prev_co2_value || temp_value != prev_temp_value || hum_value != prev_hum_value) {
+                display->clear();
+                
+                std::string line1 = "CO2";
+                std::string line2 = co2_value;
+                std::string line3 = "T:" + temp_value;
+                std::string line4 = "H:" + hum_value;
+                
+                std::string display_text = line1 + "\n" + line2 + "\n" + line3 + "\n" + line4;
+                display->display_text(display_text, 0, 0, 3, true);
+                
+                prev_co2_value = co2_value;
+                prev_temp_value = temp_value;
+                prev_hum_value = hum_value;
             }
-
-            std::string text = co2_str + "\n" + temp_str + "\n" + press_str + "\n" + time_str + "\n" + date_str;
-
-            display->display_text(text);
         }
+        
+        // Log data to CSV
+        logger.log(co2_ppm, temp_c, press_pa, humidity_rh, timestamp);
 
         std::this_thread::sleep_for(std::chrono::seconds(5)); // Update every 5 seconds
     }

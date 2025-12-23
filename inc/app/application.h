@@ -35,6 +35,8 @@ namespace app
         const std::vector<std::unique_ptr<peripherals::gas_sensor_iface>>& get_gas_sensors() const { return gas_sensors_; }
         const std::vector<std::unique_ptr<peripherals::display_iface>>& get_displays() const { return displays_; }
         const std::vector<std::unique_ptr<peripherals::rtc_iface>>& get_rtcs() const { return rtcs_; }
+        
+        const std::string& get_log_path() const { return config_.log_path; }
 
     private:
 
@@ -47,6 +49,7 @@ namespace app
         bool is_periphery_init = false;
         bool should_run_ = true;
         std::string config_path_ = "./config/atmolyt.json";
+        config::AppConfig config_;
 
         // storage for live connections and peripheral objects
         std::vector<std::unique_ptr<connections::connection_iface<uint8_t>>> connections_;

@@ -79,6 +79,8 @@ Status scd41::read_data(gas_data &data)
 
     data.co2_ppm = convert_co2(co2_raw);
     data.tvoc_ppb = 0.0f; // SCD41 doesn't measure TVOC
+    data.temperature_c = convert_temperature(temp_raw);
+    data.humidity_rh = convert_humidity(hum_raw);
     data.valid = true;
     last_read_time_ = std::chrono::steady_clock::now();
 

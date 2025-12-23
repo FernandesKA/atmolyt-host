@@ -19,6 +19,8 @@ bool load_config(const std::string &path, AppConfig &out)
     }
 
     out.peripherals.clear();
+    out.log_path = root.get<std::string>("log_path", "atmolyt_data.csv");
+    
     for (auto &item : root.get_child("peripherals")) {
         PeripheralSpec spec;
         ptree node = item.second;

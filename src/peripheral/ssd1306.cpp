@@ -15,6 +15,7 @@
 #include <sstream>
 #include <thread>
 #include <chrono>
+#include <cmath>
 #include <fcntl.h>
 #include <sys/ioctl.h>
 #include <sys/mman.h>
@@ -265,16 +266,18 @@ Status ssd1306::clear()
     }
 }
 
-Status ssd1306::display_text(const std::string &text, uint8_t x, uint8_t y)
+Status ssd1306::display_text(const std::string &text, uint8_t x, uint8_t y, uint8_t scale, bool bold)
 {
+    if (scale < 1) scale = 1;
+    if (scale > 4) scale = 4;
+    
     if (connection_ == nullptr) {
-        // Framebuffer mode - render text using font
-        if (fb_fd_ == -1) return Status::Success; // No-op if fb not available
+        if (fb_fd_ == -1) return Status::Success;
         uint8_t current_x = x;
         uint8_t current_y = y;
         for (char c : text) {
             if (c == '\n') {
-                current_y += 8;
+                current_y += 8 * scale;
                 current_x = x;
             } else if (c >= 32 && c <= 126) {
                 const uint8_t* char_data = font5x7[c - 32];
@@ -282,11 +285,20 @@ Status ssd1306::display_text(const std::string &text, uint8_t x, uint8_t y)
                     uint8_t column = char_data[col];
                     for (int row = 0; row < 7; ++row) {
                         if (column & (1 << row)) {
-                            draw_pixel(current_x + col, current_y + row, 1);
+                            for (int sx = 0; sx < scale; ++sx) {
+                                for (int sy = 0; sy < scale; ++sy) {
+                                    draw_pixel(current_x + col * scale + sx, current_y + row * scale + sy, 1);
+                                }
+                            }
+                            if (bold) {
+                                for (int sy = 0; sy < scale; ++sy) {
+                                    draw_pixel(current_x + col * scale + scale, current_y + row * scale + sy, 1);
+                                }
+                            }
                         }
                     }
                 }
-                current_x += 6; // 5 pixels + 1 space
+                current_x += (bold ? 7 : 6) * scale;
             }
         }
         return Status::Success;
@@ -439,6 +451,32 @@ void ssd1306::draw_pixel(int x, int y, int color)
             } else {
                 // Handle other bit depths if needed
             }
+        }
+    }
+}
+
+void ssd1306::draw_line(int x0, int y0, int x1, int y1, int color)
+{
+    // Bresenham's line algorithm
+    int dx = abs(x1 - x0);
+    int dy = abs(y1 - y0);
+    int sx = (x0 < x1) ? 1 : -1;
+    int sy = (y0 < y1) ? 1 : -1;
+    int err = dx - dy;
+
+    while (true) {
+        draw_pixel(x0, y0, color);
+
+        if (x0 == x1 && y0 == y1) break;
+
+        int e2 = 2 * err;
+        if (e2 > -dy) {
+            err -= dy;
+            x0 += sx;
+        }
+        if (e2 < dx) {
+            err += dx;
+            y0 += sy;
         }
     }
 }

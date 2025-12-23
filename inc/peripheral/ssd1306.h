@@ -29,14 +29,15 @@ public:
     Status read_data(display_data &data) override { return Status::Success; }
 
     Status clear() override;
-    Status display_text(const std::string &text, uint8_t x = 0, uint8_t y = 0) override;
+    Status display_text(const std::string &text, uint8_t x = 0, uint8_t y = 0, uint8_t scale = 1, bool bold = false) override;
     Status set_cursor(uint8_t x, uint8_t y) override;
+    void draw_pixel(int x, int y, int color) override;
+    void draw_line(int x0, int y0, int x1, int y1, int color) override;
 
 private:
     Status send_command(uint8_t cmd);
     Status send_data(const uint8_t *data, size_t len);
     Status init_display();
-    void draw_pixel(int x, int y, int color);
 
     uint8_t cursor_x_;
     uint8_t cursor_y_;
