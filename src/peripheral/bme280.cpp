@@ -1,3 +1,14 @@
+/**
+ * @file bme280.cpp
+ * @author FernandesKA (fernandes.kir@yandex.ru)
+ * @brief  BME280 environmental sensor implementation
+ * @version 0.1
+ * @date 2025-12-23
+ * 
+ * @copyright Copyright (c) 2025
+ * 
+ */
+
 #include "peripheral/bme280.h"
 #include <array>
 #include <cstring>

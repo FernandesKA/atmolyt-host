@@ -1,3 +1,14 @@
+/**
+ * @file test_main.cpp
+ * @author FernandesKA (fernandes.kir@yandex.ru)
+ * @brief  Unit tests for peripheral and connection interfaces
+ * @version 0.1
+ * @date 2025-12-23
+ * 
+ * @copyright Copyright (c) 2025
+ * 
+ */
+
 #include <iostream>
 #include <cassert>
 

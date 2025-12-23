@@ -1,6 +1,12 @@
 /**
  * @file self_test.cpp
- * @brief Self-test implementation: exercises connections and peripherals
+ * @author FernandesKA (fernandes.kir@yandex.ru)
+ * @brief  Implementation of the self_test class
+ * @version 0.1
+ * @date 2025-12-23
+ * 
+ * @copyright Copyright (c) 2025
+ * 
  */
 
 #include "self_test/self_test.h"

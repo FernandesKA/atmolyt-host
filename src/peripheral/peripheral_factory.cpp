@@ -1,7 +1,7 @@
 /**
  * @file peripheral_factory.cpp
  * @author FernandesKA (fernandes.kir@yandex.ru)
- * @brief 
+ * @brief  Peripheral factory implementation
  * @version 0.1
  * @date 2025-12-06
  * 

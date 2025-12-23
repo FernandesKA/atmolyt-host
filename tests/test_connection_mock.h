@@ -1,3 +1,14 @@
+/**
+ * @file test_connection_mock.h
+ * @author FernandesKA (fernandes.kir@yandex.ru)
+ * @brief  Test double for connection interface
+ * @version 0.1
+ * @date 2025-12-23
+ * 
+ * @copyright Copyright (c) 2025
+ * 
+ */
+
 #pragma once
 
 #include "connections/connection_iface.h"

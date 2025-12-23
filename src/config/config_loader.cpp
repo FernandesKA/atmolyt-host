@@ -1,3 +1,14 @@
+/**
+ * @file config_loader.cpp
+ * @author FernandesKA (fernandes.kir@yandex.ru)
+ * @brief  Configuration loader for the application
+ * @version 0.1
+ * @date 2025-12-23
+ * 
+ * @copyright Copyright (c) 2025
+ * 
+ */
+
 #include "config/config_loader.h"
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/json_parser.hpp>

@@ -15,10 +15,11 @@
 #include <string_view>
 #include <optional>
 #include <chrono>
+#include <variant>
+#include <system_error>
 
 namespace peripherals
 {
-
     enum class Status
     {
         Success = 0,
@@ -28,6 +29,49 @@ namespace peripherals
         ErrorTimeout,
         ErrorCalibration,
         ErrorOutOfRange
+    };
+
+    // Modern error handling: Result<T> = variant<T, Status>
+    template<typename T>
+    class [[nodiscard]] Result {
+    public:
+        Result(T value) : data_(std::move(value)) {}
+        Result(Status error) : data_(error) {}
+        
+        explicit operator bool() const noexcept { return std::holds_alternative<T>(data_); }
+        bool has_value() const noexcept { return std::holds_alternative<T>(data_); }
+        
+        T& value() & { return std::get<T>(data_); }
+        const T& value() const & { return std::get<T>(data_); }
+        T&& value() && { return std::get<T>(std::move(data_)); }
+        
+        T value_or(T&& default_value) const & {
+            return has_value() ? value() : std::move(default_value);
+        }
+        
+        Status error() const { return std::get<Status>(data_); }
+        
+    private:
+        std::variant<T, Status> data_;
+    };
+
+    // Specialization for void (no return value, just Status)
+    template<>
+    class [[nodiscard]] Result<void> {
+    public:
+        Result() : error_(Status::Success) {}
+        Result(Status error) : error_(error) {}
+        
+        explicit operator bool() const noexcept { return error_ == Status::Success; }
+        bool has_value() const noexcept { return error_ == Status::Success; }
+        
+        Status error() const { return error_; }
+        
+        // For compatibility with old code
+        operator Status() const { return error_; }
+        
+    private:
+        Status error_;
     };
 
     template <typename T>
