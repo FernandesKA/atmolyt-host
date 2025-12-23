@@ -1,112 +1,182 @@
-# atmolyt-host
+# Atmolyt Host
 
-`atmolyt-host` — приложение для системы Atmolyt: умеет работать с реальной периферией на таргете (RPi/ARM) и с mock‑периферией на хосте для разработки/CI.
+Система мониторинга атмосферных показателей. Читает данные с датчиков CO2, температуры и влажности, выводит их на OLED-дисплей и сохраняет в CSV.
 
 ## Возможности
 
-- Сбор данных: чтение значений с environmental/IMU/gas сенсоров.
-- Self-test: утилита самотеста для проверки соединений и сенсоров.
-- Конфигурация: загрузка описания периферии из JSON (`config/atmolyt.json`).
+- **Сбор данных**: асинхронное чтение с датчиков SCD41 (CO2/температура/влажность) и BME280 (давление/температура) по I2C
+- **Визуализация**: значения на OLED-дисплее SSD1306 (128x64) с автообновлением при изменении значений
+- **Логирование**: фоновая запись в CSV через отдельный поток (формат: timestamp, CO2, температура, давление, влажность)
+- **Самотестирование**: встроенная диагностика датчиков с JSON-выводом
+- **Кросс-платформенность**: сборка как для разработки на x86/x64 (mock-датчики), так и для ARM/RPi
 
-## Требования
+## Технические требования
 
-### Host build (mock)
-- `cmake`, C++ компилятор (GCC/Clang).
-- Boost: `filesystem`, `system`, `program_options`.
+### Зависимости
 
-Debian/Ubuntu пример:
+**Обязательные**:
+- CMake ≥ 3.18
+- C++23-совместимый компилятор (GCC ≥ 11, Clang ≥ 14)
+- Boost ≥ 1.70:
+  - `libboost-filesystem`
+  - `libboost-system`
+  - `libboost-program-options`
+
+**Для Raspberry Pi**:
+- Buildroot SDK или другой кросс-компилятор с sysroot
+- I2C-устройства в `/dev/i2c-*` (включить через `raspi-config` → Interface → I2C)
+
+**Установка зависимостей (Debian/Ubuntu)**:
+```bash
 sudo apt update
-sudo apt install -y build-essential cmake libboost-all-dev
+sudo apt install build-essential cmake libboost-filesystem-dev \
+                 libboost-system-dev libboost-program-options-dev
+```
 
-### Target build (RPi/ARM)
-- Внешний toolchain + sysroot (например, Buildroot SDK).
+### Поддерживаемое железо
+
+| Датчик | Интерфейс | Адрес I2C | Описание |
+|--------|-----------|-----------|----------|
+| SCD41  | I2C       | 0x62      | CO2, температура, влажность (Sensirion) |
+| BME280 | I2C       | 0x76/0x77 | Давление, температура, влажность (Bosch) |
+| SSD1306| I2C       | 0x3C/0x3D | OLED дисплей 128x64 |
+| DS3231 | I2C       | 0x68      | RTC (опционально) |
 
 ## Сборка
 
-Проект поддерживает два режима:
-- **Host build**: mock‑периферия (`TARGET_HOST=ON`).
-- **Target build (RPi/ARM)**: сборка для таргета (`TARGET_HOST=OFF`), тулчейн задаётся снаружи при конфигурации (SDK `environment-setup` или `CMAKE_TOOLCHAIN_FILE`).
+Для отладки на компьютере с mock датчиками:
 
-### Сборка для хоста (mock)
+# Конфигурация
+cmake -S . -B build_host \
+  -DCMAKE_BUILD_TYPE=Debug \
+  -DTARGET_HOST=ON \
+  ./project/
 
-cmake -S . -B build_host -DCMAKE_BUILD_TYPE=Debug -DTARGET_HOST=ON ./project/
-cmake --build build_host -- -j"$(nproc)"
+# Сборка
+cmake --build build_host -j$(nproc)
 
-Запуск:
-./build_host/atmolyt-host
+# Запуск
+./build_host/atmolyt-host --help
+```
 
-### Сборка для Raspberry Pi (кросс-компиляция)
+### Кросс-компиляция
 
-Вариант 1 (рекомендуется): Buildroot SDK `environment-setup`.
+**Buildroot SDK**
 
-source /path/to/buildroot-sdk/environment-setup*
-cmake -S . -B build_rpi -DCMAKE_BUILD_TYPE=Debug -DTARGET_HOST=OFF ./project
-cmake --build build_rpi -- -j"$(nproc)"
+```bash
+# Загрузить окружение SDK
+source /path/to/buildroot-2024.02/output/host/environment-setup
 
-## Упаковка (CPack TGZ)
+# Конфигурация
+cmake -S . -B build_rpi \
+  -DCMAKE_BUILD_TYPE=Release \
+  -DTARGET_HOST=OFF \
+  ./project/
 
-Проект использует CPack и генерирует `.tar.gz` архив с бинарником и конфигами.
+# Сборка
+cmake --build build_rpi -j$(nproc)
 
+
+### Создание пакета
+
+CPack генерирует `.tar.gz` с бинарником, конфигами и скриптами:
+
+```bash
+# Для host
 cmake --build build_host --target package
 
-или
+# Для RPi
 cmake --build build_rpi --target package
 
-Ожидаемый файл: `atmolyt-host-0.1.0.tar.gz`.
+# Результат: atmolyt-host-0.1.0.tar.gz
+```
 
-## Запуск и self-test
+Структура пакета:
+```
+atmolyt-host-0.1.0/
+├── bin/atmolyt-host          # Исполняемый файл
+├── config/atmolyt.json        # Конфигурация
+└── scripts/
+    ├── install.sh             # Установка как systemd/init.d сервис
+    ├── start.sh               # Ручной запуск
+    ├── remove.sh              # Удаление сервиса
+    └── debug.sh               # Запуск под gdbserver
+```
 
-### Self-test
+### Скрипты
 
-Self-test предназначен для поочерёдной проверки устройств из конфига: инициализация соединения, проверка наличия, чтение показаний и сброс. [file:225]
+**`scripts/install.sh`** - установка как системный сервис:
+```bash
+cd atmolyt-host-0.1.0/
+sudo ./scripts/install.sh
 
-CLI опции:
-- `--st`, `-s` : запустить self-test и выйти.
-- `--st-config <path>` : путь к JSON-конфигу (по умолчанию `./config/atmolyt.json`).
-- `--st-json` : вывести результаты self-test в JSON (удобно для CI/скриптов).
+# Устанавливает в:
+# - /opt/atmolyt-host/bin/
+# - /etc/atmolyt-host/
+# - /etc/init.d/S99atmolyt (для System V init)
+```
 
-Примеры:
-human-readable
-./build_host/atmolyt-host --st
+**`scripts/start.sh`** - ручной запуск из пакета:
+```bash
+./scripts/start.sh
+# Запускает бинарник с конфигом из ./config/
+```
 
-json output
-./build_host/atmolyt-host --st --st-json
+**`scripts/remove.sh`** - удаление сервиса:
+```bash
+sudo ./scripts/remove.sh
+```
 
-указать кастомный конфиг
-./build_host/atmolyt-host --st --st-config /path/to/my_atmolyt.json --st-json
+**`scripts/debug.sh`** - удаленная отладка через GDB:
+```bash
+./scripts/debug.sh           # gdbserver на порту 2345
+./scripts/debug.sh 3333      # указать кастомный порт
 
+arm-linux-gnueabihf-gdb ./atmolyt-host
+(gdb) target remote 192.168.1.100:2345
+(gdb) continue
+```
 
 ## Конфигурация
 
-Файл по умолчанию: `config/atmolyt.json`.
+Файл `config/atmolyt.json` в формате JSON:
 
-Пример:
+```json
 {
-"peripherals": [
-{
-"connection": "mock",
-"type": "bme280",
-"device": "",
-"address": 118
+  "log_path": "/var/log/atmolyt_data.csv",
+  "peripherals": [
+    {
+      "connection": "i2c",
+      "type": "scd41",
+      "device": "/dev/i2c-1",
+      "address": 98
+    },
+    {
+      "connection": "i2c",
+      "type": "bme280",
+      "device": "/dev/i2c-1",
+      "address": 118
+    },
+    {
+      "connection": "i2c",
+      "type": "ssd1306",
+      "device": "/dev/i2c-1",
+      "address": 60
+    },
+    {
+      "connection": "i2c",
+      "type": "ds3231",
+      "device": "/dev/i2c-1",
+      "address": 104
+    }
+  ]
 }
-]
-}
+```
 
-Примечания:
-- `connection`: `mock` или `i2c` (позже `spi`/`uart`).
-- `type`: строковое имя типа периферии (см. `peripheral_factory::type_map_`).
-
-## Пример JSON-вывода self-test
-
-{"summary":{"failures":0},"peripherals":[{"type":"bme280","connection":"mock","address":"118","ok":true,"temperature_c":25,"humidity_pct":50,"pressure_pa":101325,"message":"ok"}]}
-
-
-### Запуск gdbserver на таргете
-
-Скрипт `scripts/debug.sh` запускает приложение под `gdbserver`.
-
-Рекомендуемая версия (порт аргументом, дефолт 2345):
-./scripts/debug.sh # 2345
-./scripts/debug.sh 3333 # 3333
-GDBSERVER_PORT=4444 ./scripts/debug.sh # 4444
+**Параметры**:
+- `log_path` - путь к CSV-файлу логов
+- `connection` - тип соединения (`i2c`, `mock`)
+- `type` - модель датчика (см. таблицу выше)
+- `device` - файл устройства Linux (например, `/dev/i2c-1`)
+- `address` - I2C-адрес (десятичный)
 
