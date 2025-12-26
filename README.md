@@ -16,11 +16,15 @@
 
 **Обязательные**:
 - CMake ≥ 3.18
-- C++23-совместимый компилятор (GCC ≥ 11, Clang ≥ 14)
-- Boost ≥ 1.70:
+- C++20-совместимый компилятор (GCC ≥ 10, Clang ≥ 10)
+
+**Опциональные** (для улучшенной функциональности):
+- Boost ≥ 1.70 (для парсинга JSON и опций командной строки):
   - `libboost-filesystem`
   - `libboost-system`
   - `libboost-program-options`
+  
+  Если Boost не найден, приложение автоматически использует встроенные парсеры без внешних зависимостей.
 
 **Для Raspberry Pi**:
 - Buildroot SDK или другой кросс-компилятор с sysroot
@@ -29,8 +33,9 @@
 **Установка зависимостей (Debian/Ubuntu)**:
 ```bash
 sudo apt update
-sudo apt install build-essential cmake libboost-filesystem-dev \
-                 libboost-system-dev libboost-program-options-dev
+sudo apt install build-essential cmake
+# Опционально для Boost:
+sudo apt install libboost-filesystem-dev libboost-system-dev libboost-program-options-dev
 ```
 
 ### Поддерживаемое железо

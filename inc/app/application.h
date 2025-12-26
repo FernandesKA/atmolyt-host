@@ -11,8 +11,6 @@
 
 #pragma once
 
-#include <boost/program_options.hpp>
-
 #include "config/config_loader.h"
 #include "connections/connection_iface.h"
 #include "peripheral/peripheral_factory.h"

@@ -10,12 +10,19 @@
  */
 
 #include "config/config_loader.h"
-#include <boost/property_tree/ptree.hpp>
-#include <boost/property_tree/json_parser.hpp>
+
+#ifdef USE_BOOST
+    #include <boost/property_tree/ptree.hpp>
+    #include <boost/property_tree/json_parser.hpp>
+#else
+    #include "config/json_parser.h"
+#endif
+
 #include <iostream>
 
 namespace config {
 
+#ifdef USE_BOOST
 using boost::property_tree::ptree;
 
 bool load_config(const std::string &path, AppConfig &out)
@@ -56,5 +63,64 @@ bool load_config(const std::string &path, AppConfig &out)
 
     return true;
 }
+
+#else  // Fallback JSON parser without boost
+
+bool load_config(const std::string &path, AppConfig &out)
+{
+    auto root = json::parse_file(path);
+    if (!root) {
+        std::cerr << "Failed to read config: " << path << std::endl;
+        return false;
+    }
+
+    if (!root->is_object()) {
+        std::cerr << "Config root must be an object" << std::endl;
+        return false;
+    }
+
+    out.peripherals.clear();
+    out.log_path = root->get_string("log_path", "atmolyt_data.csv");
+    
+    auto peripherals_val = root->get("peripherals");
+    if (!peripherals_val || !peripherals_val->is_array()) {
+        std::cerr << "Missing or invalid 'peripherals' array in config" << std::endl;
+        return false;
+    }
+
+    const auto& peripherals = peripherals_val->as_array();
+    for (const auto& item : peripherals) {
+        if (!item || !item->is_object()) {
+            // skip invalid entry
+            continue;
+        }
+
+        PeripheralSpec spec;
+        try {
+            spec.connection = item->get_string("connection", "i2c");
+            spec.type = item->get_string("type", "bme280");
+            spec.device = item->get_string("device", "");
+            
+            std::string addr = item->get_string("address", "0x76");
+            try {
+                if (addr.rfind("0x", 0) == 0 || addr.rfind("0X", 0) == 0)
+                    spec.address = static_cast<uint8_t>(std::stoul(addr, nullptr, 16));
+                else
+                    spec.address = static_cast<uint8_t>(std::stoul(addr));
+            } catch (...) { 
+                spec.address = 0x76; 
+            }
+
+            out.peripherals.push_back(spec);
+        }
+        catch (...) {
+            // skip invalid entry
+        }
+    }
+
+    return true;
+}
+
+#endif
 
 } // namespace config

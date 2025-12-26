@@ -1,0 +1,6 @@
+/home/fka/dev_linux/atmolyt/atmolyt-host/build_m1s/_CPack_Packages/Linux/TGZ/atmolyt-host-0.1.0/bin/atmolyt-host
+/home/fka/dev_linux/atmolyt/atmolyt-host/build_m1s/_CPack_Packages/Linux/TGZ/atmolyt-host-0.1.0/scripts/start.sh
+/home/fka/dev_linux/atmolyt/atmolyt-host/build_m1s/_CPack_Packages/Linux/TGZ/atmolyt-host-0.1.0/scripts/debug.sh
+/home/fka/dev_linux/atmolyt/atmolyt-host/build_m1s/_CPack_Packages/Linux/TGZ/atmolyt-host-0.1.0/scripts/install.sh
+/home/fka/dev_linux/atmolyt/atmolyt-host/build_m1s/_CPack_Packages/Linux/TGZ/atmolyt-host-0.1.0/scripts/remove.sh
+/home/fka/dev_linux/atmolyt/atmolyt-host/build_m1s/_CPack_Packages/Linux/TGZ/atmolyt-host-0.1.0/config/atmolyt.json

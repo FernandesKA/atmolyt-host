@@ -1,0 +1,29 @@
+{
+  "log_path": "/var/log/atmolyt_data.csv",
+  "peripherals": [
+    {
+      "connection": "i2c",
+      "type": "bmp280",
+      "device": "/dev/i2c-1",
+      "address": 118
+    },
+    {
+      "connection": "i2c",
+      "type": "scd41",
+      "device": "/dev/i2c-1",
+      "address": 98
+    },
+    {
+      "connection": "i2c",
+      "type": "ssd1306",
+      "device": "/dev/i2c-1",
+      "address": 60
+    },
+    {
+      "connection": "i2c",
+      "type": "ds3231",
+      "device": "/dev/i2c-1",
+      "address": 104
+    }
+  ]
+}

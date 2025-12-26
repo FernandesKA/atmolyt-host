@@ -1,0 +1,11 @@
+/home/fka/dev_linux/atmolyt/atmolyt-host/build_test/CMakeFiles/atmolyt-host.dir
+/home/fka/dev_linux/atmolyt/atmolyt-host/build_test/CMakeFiles/test_atmolyt.dir
+/home/fka/dev_linux/atmolyt/atmolyt-host/build_test/CMakeFiles/package.dir
+/home/fka/dev_linux/atmolyt/atmolyt-host/build_test/CMakeFiles/package_source.dir
+/home/fka/dev_linux/atmolyt/atmolyt-host/build_test/CMakeFiles/test.dir
+/home/fka/dev_linux/atmolyt/atmolyt-host/build_test/CMakeFiles/edit_cache.dir
+/home/fka/dev_linux/atmolyt/atmolyt-host/build_test/CMakeFiles/rebuild_cache.dir
+/home/fka/dev_linux/atmolyt/atmolyt-host/build_test/CMakeFiles/list_install_components.dir
+/home/fka/dev_linux/atmolyt/atmolyt-host/build_test/CMakeFiles/install.dir
+/home/fka/dev_linux/atmolyt/atmolyt-host/build_test/CMakeFiles/install/local.dir
+/home/fka/dev_linux/atmolyt/atmolyt-host/build_test/CMakeFiles/install/strip.dir

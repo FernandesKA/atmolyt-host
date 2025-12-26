@@ -4,7 +4,7 @@ project(atmolyt-host
     VERSION 0.1.0
     LANGUAGES CXX)
 
-set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Build types
@@ -16,16 +16,30 @@ set(CMAKE_CXX_FLAGS_DEBUG   "-O0 -g3")
 # - TARGET_HOST=OFF -> target build (RPi/ARM), toolchain/sysroot must be provided externally
 option(TARGET_HOST "Build for host with mock peripherals" OFF)
 
+# Boost option: try to find boost, but don't require it
+option(USE_BOOST "Use Boost for JSON parsing and command-line parsing" ON)
+
 if(TARGET_HOST)
     message(STATUS "Configuring for host (mock peripherals)")
 else()
     message(STATUS "Configuring for target (RPi/ARM). Provide toolchain externally via CMAKE_TOOLCHAIN_FILE or SDK environment.")
 endif()
 
-find_package(Boost 1.70 REQUIRED COMPONENTS
-    filesystem
-    system
-    program_options)
+# Try to find Boost
+if(USE_BOOST)
+    find_package(Boost 1.70 COMPONENTS filesystem system program_options)
+    if(Boost_FOUND)
+        message(STATUS "Boost found: Using Boost libraries")
+        set(HAVE_BOOST ON)
+    else()
+        message(STATUS "Boost NOT found: Will use fallback JSON and command-line parsers")
+        set(HAVE_BOOST OFF)
+        set(USE_BOOST OFF)
+    endif()
+else()
+    message(STATUS "Boost disabled: Using fallback JSON and command-line parsers")
+    set(HAVE_BOOST OFF)
+endif()
 
 set(REPO_ROOT "${CMAKE_CURRENT_LIST_DIR}/..")
 
@@ -33,6 +47,13 @@ file(GLOB_RECURSE PROJECT_SOURCES
     ${CMAKE_SOURCE_DIR}/src/*.cpp
     ${REPO_ROOT}/src/*.cpp
 )
+
+# Add custom JSON and command-line parser sources if not using boost
+if(NOT HAVE_BOOST)
+    list(APPEND PROJECT_SOURCES
+        ${REPO_ROOT}/src/config/json_parser.cpp
+        ${REPO_ROOT}/src/config/cmdline_parser.cpp)
+endif()
 
 if(TARGET_HOST)
     list(APPEND PROJECT_SOURCES
@@ -51,12 +72,19 @@ target_include_directories(atmolyt-host PRIVATE
 )
 
 target_compile_definitions(atmolyt-host PRIVATE TARGET_HOST=$<BOOL:${TARGET_HOST}>)
+if(HAVE_BOOST)
+    target_compile_definitions(atmolyt-host PRIVATE USE_BOOST=1)
+endif()
 
-target_link_libraries(atmolyt-host PRIVATE
-    Boost::filesystem
-    Boost::system
-    Boost::program_options
-)
+if(HAVE_BOOST)
+    target_link_libraries(atmolyt-host PRIVATE
+        Boost::filesystem
+        Boost::system
+        Boost::program_options
+    )
+endif()
+
+target_link_libraries(atmolyt-host PRIVATE pthread)
 
 # Enable CTest
 enable_testing()
@@ -75,6 +103,13 @@ if(TEST_SOURCES)
         ${REPO_ROOT}/src/config/config_loader.cpp
     )
 
+    # Add custom parser sources if not using boost
+    if(NOT HAVE_BOOST)
+        list(APPEND TEST_LINK_SOURCES
+            ${REPO_ROOT}/src/config/json_parser.cpp
+            ${REPO_ROOT}/src/config/cmdline_parser.cpp)
+    endif()
+
     add_executable(test_atmolyt ${TEST_SOURCES} ${TEST_LINK_SOURCES})
     target_include_directories(test_atmolyt PRIVATE
         ${REPO_ROOT}/inc
@@ -85,14 +120,21 @@ if(TEST_SOURCES)
         ${CMAKE_SOURCE_DIR}/inc
         ${REPO_ROOT}/tests
     )
-    target_link_libraries(test_atmolyt PRIVATE
-        Boost::filesystem
-        Boost::system
-        Boost::program_options
-    )
+    
+    target_compile_definitions(test_atmolyt PRIVATE TARGET_HOST)
+    if(HAVE_BOOST)
+        target_compile_definitions(test_atmolyt PRIVATE USE_BOOST=1)
+    endif()
+    
+    if(HAVE_BOOST)
+        target_link_libraries(test_atmolyt PRIVATE
+            Boost::filesystem
+            Boost::system
+            Boost::program_options
+        )
+    endif()
 
-    # Compile with host target features for test
-    add_compile_definitions(TARGET_HOST)
+    target_link_libraries(test_atmolyt PRIVATE pthread)
 
     add_test(NAME atmolyt_tests COMMAND test_atmolyt)
 endif()

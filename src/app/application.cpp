@@ -19,9 +19,14 @@
 #include "peripheral/peripheral_iface.h"
 #include "self_test/self_test.h"
 
+#ifdef USE_BOOST
+    #include <boost/program_options.hpp>
+#else
+    #include "config/cmdline_parser.h"
+#endif
+
 #include <iostream>
 #include <cerrno>
-#include <boost/program_options.hpp>
 
 using namespace peripherals;
 
@@ -86,10 +91,11 @@ namespace app
 
     int atmolyt::parse_inarg(int argc, char **argv)
     {
-        namespace po = boost::program_options;
-
         if (argc < 1 || !argv)
             return -EINVAL;
+
+#ifdef USE_BOOST
+        namespace po = boost::program_options;
 
         po::options_description desc("Allowed options");
         desc.add_options()
@@ -142,6 +148,54 @@ namespace app
             }
             return 1;
         }
+
+#else  // Fallback without boost
+
+        cmdline::OptionsDescription desc("Allowed options");
+        desc.add_option("help", "h", "produce help message", "flag");
+        desc.add_option("view", "v", "view params from config file", "flag");
+        desc.add_option("config", "c", "path to config file", "value", "./config/atmolyt.json");
+        desc.add_option("st", "s", "begin self testing hardware", "flag");
+        desc.add_option("st-config", "", "path to config for self-test", "value", "./config/atmolyt.json");
+        desc.add_option("st-json", "", "output self-test results as JSON", "flag");
+
+        cmdline::CommandLineParser parser(desc);
+        cmdline::VariablesMap vm;
+        int parse_rc = parser.parse(argc, argv, vm);
+        
+        if (parse_rc != 0 || vm.has("help")) {
+            desc.print(std::cout);
+            if (parse_rc != 0 && !vm.has("help")) {
+                return -EINVAL;
+            }
+            return (vm.has("help")) ? 1 : -EINVAL;
+        }
+
+        config_path_ = vm.get_string("config", "./config/atmolyt.json");
+
+        if (vm.get_bool("view"))
+        {
+            // TODO: implement viewing config file parameters
+            std::cout << "View config requested\n";
+            return 1;
+        }
+
+        if (vm.get_bool("st"))
+        {
+            std::cout << "Self-test requested\n";
+            std::string cfg = vm.get_string("st-config", "./config/atmolyt.json");
+            bool json_out = vm.get_bool("st-json");
+            // run self-test sequence (will load config and exercise peripherals)
+            st::self_test tester(cfg, json_out);
+            int rc = tester.run();
+            if (rc != 0)
+            {
+                std::cerr << "Self-test returned: " << rc << "\n";
+            }
+            return 1;
+        }
+
+#endif
 
         return 0;
     }
